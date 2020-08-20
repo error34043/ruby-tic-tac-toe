@@ -1,15 +1,15 @@
 class Board
 
   def initialize(board_state_array)
-    @box1 =board_state_array[0]
-    @box2 =board_state_array[1]
-    @box3 =board_state_array[2]
-    @box4 =board_state_array[3]
-    @box5 =board_state_array[4]
-    @box6 =board_state_array[5]
-    @box7 =board_state_array[6]
-    @box8 =board_state_array[7]
-    @box9 =board_state_array[8]
+    @box1 = board_state_array[1]
+    @box2 = board_state_array[2]
+    @box3 = board_state_array[3]
+    @box4 = board_state_array[4]
+    @box5 = board_state_array[5]
+    @box6 = board_state_array[6]
+    @box7 = board_state_array[7]
+    @box8 = board_state_array[8]
+    @box9 = board_state_array[9]
     @victory = false
   end
 
@@ -38,6 +38,9 @@ class Board
     @victory = true if @box3 == @box6 && @box3 == @box9
     @victory = true if @box1 == @box5 && @box1 == @box9
     @victory = true if @box3 == @box5 && @box3 == @box7
+    @victory = true if @box1 == @box2 && @box1 == @box3
+    @victory = true if @box4 == @box5 && @box4 == @box6
+    @victory = true if @box7 == @box8 && @box7 == @box9
     @victory
   end
 
@@ -54,12 +57,12 @@ class Player
 
   def get_input(board_array)
     loop do
-      print "#{@name}, please enter a number>> "
+      print "\n#{@name}, please enter a number: "
       choice = gets.chomp.to_i
       if board_array.include? choice
         return choice
       else
-        puts "Please enter a number that has not yet been chosen by either player."
+        puts "#{@name}, please enter a number that has not yet been chosen by either player."
       end
     end
   end
@@ -69,33 +72,79 @@ end
 class GamePlay
 
   def self.turn(board_array, player, player_choice)
-    board_array[player_choice - 1] = player.token
+    board_array[player_choice] = player.token
     current_play = Board.new(board_array)
     current_play.display_board
     current_play.victory?
   end
 
+  def self.replay_choice
+    choices = ['yes', 'y', 'no', 'n']
+
+    loop do
+      print "Would you like to play another game? [yes/no]: "
+      player_choice = gets.chomp
+      player_choice = player_choice.downcase
+      if choices.include? player_choice
+        if player_choice == 'yes' || player_choice == 'y'
+          puts "\nGreat! Let's go again."
+          check = true
+          return check
+        else
+          puts "\nThank you both for playing!"
+          check = false
+          return check
+        end
+      else
+        puts "\nSorry, I didn't get that. Please tell me again."
+      end
+    end
+  end
+
 end
 
 
-puts "Welcome! Let's set you both up for a nice little game of Tic Tac Toe."
-print "\nPlease enter the first player's name>> "
+puts "Welcome! Let's set you two up for a nice little game of Tic Tac Toe."
+print "\nPlease enter the first player's name: "
 player1name = gets.chomp
 Player1 = Player.new(player1name, 'X')
-print "\nPlease enter the second player's name>> "
+print "Please enter the second player's name: "
 player2name = gets.chomp
 Player2 = Player.new(player2name, 'O')
 
-board_state = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-start = Board.new(board_state)
-start.display_board
+loop do
 
-# Testing
-current = GamePlay.turn(board_state, Player1, 3)
-GamePlay.turn(board_state, Player2, 6)
-GamePlay.turn(board_state, Player1, 9)
-choice1 = Player1.get_input(board_state)
-if current == false
-  puts "this works"
+  board_state = ['unused', 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  start = Board.new(board_state)
+  start.display_board
+
+  win_lose = false
+  for i in 1..9
+    if i % 2 != 0
+      player_choice = Player1.get_input(board_state)
+      current = GamePlay.turn(board_state, Player1, player_choice)
+      if current == true
+        win_lose = true
+        puts "\nCongratulations, #{Player1.name}. You win!"
+        break
+      end
+    else
+      player_choice = Player2.get_input(board_state)
+      current = GamePlay.turn(board_state, Player2, player_choice)
+      if current == true
+        win_lose = true
+        puts "\nCongratulations, #{Player2.name}. You win!"
+        break
+      end
+    end
+  end
+
+  if win_lose == false
+    puts "\nYou've both tied, #{Player1.name} and #{Player2.name}!"
+  end
+
+  continue_play = GamePlay.replay_choice
+  
+  break if continue_play == false
+
 end
-puts choice1
