@@ -27,10 +27,6 @@ class Board
     @row3 = row(@box7, @box8, @box9)
     puts "\n\t\t\t#{@row1}\n\t\t\t#{divider}\n\t\t\t#{@row2}\n\t\t\t#{divider}\n\t\t\t#{@row3}"
   end
-
-  def player_choice(board_state_array, box)
-    board_state_array[box - 1] = 'X'
-  end
   
   def victory?
     @victory = true if @box1 == @box4 && @box1 == @box7
@@ -55,14 +51,16 @@ class Player
     @token = token
   end
 
-  def get_input(board_array)
+  def get_input(board_array, choice = gets.chomp)
     loop do
-      print "\n#{@name}, please enter a number: "
-      choice = gets.chomp.to_i
+      choice = choice.to_i
       if board_array.include? choice
         return choice
       else
-        puts "#{@name}, please enter a number that has not yet been chosen by either player."
+        puts "\n#{@name}, please enter a number that has not yet been chosen by either player."
+        print "#{@name}, please enter a number: "
+        choice = gets.chomp
+        return false
       end
     end
   end
@@ -97,54 +95,98 @@ class GamePlay
         end
       else
         puts "\nSorry, I didn't get that. Please tell me again."
+        return 'invalid'
       end
     end
   end
 
-end
-
-
-puts "Welcome! Let's set you two up for a nice little game of Tic Tac Toe."
-print "\nPlease enter the first player's name: "
-player1name = gets.chomp
-Player1 = Player.new(player1name, 'X')
-print "Please enter the second player's name: "
-player2name = gets.chomp
-Player2 = Player.new(player2name, 'O')
-
-loop do
-
-  board_state = ['unused', 1, 2, 3, 4, 5, 6, 7, 8, 9]
-  start = Board.new(board_state)
-  start.display_board
-
-  win_lose = false
-  for i in 1..9
-    if i % 2 != 0
-      player_choice = Player1.get_input(board_state)
-      current = GamePlay.turn(board_state, Player1, player_choice)
-      if current == true
-        win_lose = true
-        puts "\nCongratulations, #{Player1.name}. You win!"
-        break
-      end
+  def self.game_over(player1state, game_state, player1name, player2name)
+    if player1state && game_state
+      puts "\nCongratulations, #{player1name}. You win!"
+    elsif game_state
+      puts "\nCongratulations, #{player2name}. You win!"
     else
-      player_choice = Player2.get_input(board_state)
-      current = GamePlay.turn(board_state, Player2, player_choice)
-      if current == true
-        win_lose = true
-        puts "\nCongratulations, #{Player2.name}. You win!"
-        break
-      end
+      puts "\nYou've both tied, #{player1name} and #{player2name}!"
     end
   end
 
-  if win_lose == false
-    puts "\nYou've both tied, #{Player1.name} and #{Player2.name}!"
+end
+
+class Game
+  attr_accessor :player1, :player2
+
+  def player1turn(player1, player2)
+    print "\n#{player1.name}, please enter a number: "
+    player_choice = player1.get_input(@board_state)
+    current = GamePlay.turn(@board_state, player1, player_choice)
+    if current == true
+      player1_win = true
+      game_win = true
+      GamePlay.game_over(player1_win, game_win, player1.name, @player2.name)
+    end
+    current == true ? true : false
   end
 
-  continue_play = GamePlay.replay_choice
-  
-  break if continue_play == false
+  def player2turn(player1, player2)
+    print "\n#{player2.name}, please enter a number: "
+    player_choice = player2.get_input(@board_state)
+    current = GamePlay.turn(@board_state, player2, player_choice)
+    if current == true
+      player1_win = false
+      game_win = true
+      GamePlay.game_over(player1_win, game_win, player1.name, player2.name)
+    end
+    current == true ? true : false
+  end
 
+  def generate_players
+    puts "Welcome! Let's set you two up for a nice little game of Tic Tac Toe."
+    print "\nPlease enter the first player's name: "
+    player1name = gets.chomp
+    @player1 = Player.new(player1name, 'X')
+    print "Please enter the second player's name: "
+    player2name = gets.chomp
+    @player2 = Player.new(player2name, 'O')
+  end
+
+  def new_game
+    generate_players
+
+    loop do
+      continue_play = true
+
+      @board_state = ['unused', 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      start = Board.new(@board_state)
+      start.display_board
+
+      player1_win = false
+      game_win = false
+      for i in 1..9
+        if i % 2 != 0
+          won = player1turn(@player1, @player2)
+          break if won
+        else
+          won = player2turn(@player1, @player2)
+          break if won
+        end
+      end
+
+      if won == false
+        GamePlay.game_over(player1_win, game_win, player1.name, player2.name)
+      end
+
+      loop do
+        replay = GamePlay.replay_choice
+        if replay == true || replay == false
+          continue_play = replay
+          break
+        end
+      end
+      
+      break if continue_play == false
+
+    end
+  end
 end
+
+# game = Game.new.new_game
